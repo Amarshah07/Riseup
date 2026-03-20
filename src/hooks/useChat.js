@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { sendMessage } from "../services/api";
+import { speakText } from "../utils/speak";
+import { useSettings } from "../context/SettingsContext";
 
 export const useChat = () => {
+  const { voiceOn } = useSettings();
+
   const [messages, setMessages] = useState([
     { sender: "bot", text: "Hi, I'm here for you 💙" },
   ]);
@@ -22,6 +26,10 @@ export const useChat = () => {
 
       const botMessage = { sender: "bot", text: reply };
       setMessages((prev) => [...prev, botMessage]);
+
+      if (voiceOn) {
+        speakText(reply);
+      }
 
     } catch (err) {
       setError("Something went wrong. Please try again.");
