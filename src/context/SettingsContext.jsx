@@ -4,9 +4,10 @@ const SettingsContext = createContext();
 
 export const SettingsProvider = ({ children }) => {
   const [voiceOn, setVoiceOn] = useState(false);
+  const [darkMode, setDarkMode] = useState(false); // Added Dark Mode state
 
   return (
-    <SettingsContext.Provider value={{ voiceOn, setVoiceOn }}>
+    <SettingsContext.Provider value={{ voiceOn, setVoiceOn, darkMode, setDarkMode }}>
       {children}
     </SettingsContext.Provider>
   );

@@ -7,10 +7,20 @@ const Header = ({ onSettings }) => {
     <>
       {/* Header Bar */}
       <div className="px-6 py-4 backdrop-blur-md bg-white/70 flex justify-between items-center sticky top-0 z-40 shadow-sm">
-        <div>
-          <h1 className="text-lg font-semibold text-textMain">RiseUp Chat</h1>
-          <p className="text-sm text-textSoft">Your calm space</p>
-        </div>
+     <div className="flex items-center gap-3">
+  {/* Left Side: Logo */}
+  <img 
+    src="/new Rise up icon logo.png" 
+    alt="RiseUp Logo" 
+    className="w-10 h-10 object-contain drop-shadow-sm" 
+  />
+
+  {/* Right Side: Text Stack */}
+  <div className="flex flex-col">
+    <h1 className="text-lg font-semibold text-textMain leading-tight">RiseUp Chat</h1>
+    <p className="text-sm text-textSoft">Your calm space</p>
+  </div>
+</div>
 
         <div className="flex items-center gap-3 text-textSoft">
           {/* Emergency Button */}

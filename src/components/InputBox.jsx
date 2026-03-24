@@ -1,11 +1,47 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 
-const emojis = ["😊","😢","😔","😄","😡","❤️","🤝","😌"];
+// Expanded list carefully chosen for a mental health / chat context
+const emojis = [
+  // Positive & Calm
+  "😊", "🥰", "😌", "😇", "🌻", "✨", "🍵", "🌿",
+  // Empathy & Support
+  "❤️", "💙", "🫂", "🤝", "🩹", "🕊️", "🎧", "🌸",
+  // Sad & Vulnerable
+  "😢", "😔", "🥺", "😟", "😞", "💔", "🌧️", "🥀",
+  // Frustrated & Overwhelmed
+  "😡", "😤", "🤯", "🫠", "😩", "🥱", "🤐", "😶‍🌫️"
+];
 
 const InputBox = ({ onSend }) => {
   const [text, setText] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
-  const [isListening, setIsListening] = useState(false); // New state to track mic
+  const [isListening, setIsListening] = useState(false);
+  
+  // Create a reference to the whole input area to detect outside clicks
+  const inputContainerRef = useRef(null);
+
+  // Close emoji picker when clicking outside of it or pressing Escape
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (inputContainerRef.current && !inputContainerRef.current.contains(event.target)) {
+        setShowEmoji(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") setShowEmoji(false);
+    };
+
+    if (showEmoji) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showEmoji]);
 
   const handleVoiceClick = () => {
     const SpeechRecognition =
@@ -20,23 +56,14 @@ const InputBox = ({ onSend }) => {
     recognition.lang = "en-US";
     recognition.interimResults = false;
 
-    // What happens when it starts
-    recognition.onstart = () => {
-      setIsListening(true);
-    };
-
-    // What happens when it gets a result
+    recognition.onstart = () => setIsListening(true);
+    
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript;
       setText((prev) => (prev ? prev + " " + transcript : transcript));
     };
-
-    // What happens when it stops (either finished or timed out)
-    recognition.onend = () => {
-      setIsListening(false);
-    };
-
-    // What happens if there is an error (e.g., permission denied)
+    
+    recognition.onend = () => setIsListening(false);
     recognition.onerror = (event) => {
       console.error("Microphone error:", event.error);
       setIsListening(false);
@@ -49,29 +76,31 @@ const InputBox = ({ onSend }) => {
     if (!text.trim()) return;
     onSend(text);
     setText("");
+    setShowEmoji(false); // Close emoji picker on send
   };
 
   return (
     <>
-      {/* Fixed Input Area */}
-      <div className="fixed bottom-6 left-0 w-full px-6 z-40">
+      {/* Fixed Input Area - Now attached to the useRef */}
+      <div className="fixed bottom-6 left-0 w-full px-6 z-40" ref={inputContainerRef}>
         <div className="max-w-2xl mx-auto relative">
 
-          {/* Emoji Picker */}
+          {/* Proper Grid Emoji Picker */}
           {showEmoji && (
-            <div className="absolute bottom-full mb-4 left-0 p-3 rounded-2xl flex gap-2 flex-wrap max-w-[280px] z-50 bg-white/30 backdrop-blur-xl backdrop-saturate-150 border border-white/60 shadow-2xl ring-1 ring-black/5">
-              {emojis.map((e, i) => (
-                <button
-                  key={i}
-                  onClick={() => {
-                    setText((prev) => prev + e);
-                    setShowEmoji(false);
-                  }}
-                  className="text-2xl hover:scale-125 transition-transform duration-200 p-1 hover:bg-white/40 rounded-lg"
-                >
-                  {e}
-                </button>
-              ))}
+            <div className="absolute bottom-full mb-4 left-0 p-3 rounded-2xl z-50 bg-white/40 backdrop-blur-2xl backdrop-saturate-150 border border-white/60 shadow-2xl ring-1 ring-black/5 animate-in fade-in slide-in-from-bottom-2 duration-200">
+              {/* Grid Layout: 8 columns wide, perfectly aligned */}
+              <div className="grid grid-cols-8 gap-1">
+                {emojis.map((e, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setText((prev) => prev + e)}
+                    className="text-2xl hover:scale-125 transition-transform duration-200 p-1.5 hover:bg-white/50 rounded-lg flex items-center justify-center"
+                    title="Add emoji"
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
@@ -81,14 +110,16 @@ const InputBox = ({ onSend }) => {
             {/* Emoji Button */}
             <button
               onClick={() => setShowEmoji(!showEmoji)}
-              className="p-3 text-textSoft hover:text-primary transition-colors"
+              className={`p-3 transition-colors rounded-full flex items-center justify-center ${
+                showEmoji ? "text-primary bg-white/50" : "text-textSoft hover:text-primary"
+              }`}
             >
               <span className="material-symbols-outlined" data-icon="mood">
                 mood
               </span>
             </button>
 
-            {/* Input */}
+            {/* Input Text Field */}
             <input
               value={text}
               onChange={(e) => setText(e.target.value)}
@@ -97,14 +128,14 @@ const InputBox = ({ onSend }) => {
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
             />
 
-            {/* Voice Button - Now with dynamic styling! */}
+            {/* Voice Button */}
             <button
               onClick={handleVoiceClick}
               disabled={isListening}
               className={`p-3 transition-colors text-lg flex items-center justify-center rounded-full ${
                 isListening 
-                  ? "text-red-500 bg-red-100 animate-pulse" // Active state
-                  : "text-textSoft hover:text-primary"      // Default state
+                  ? "text-red-500 bg-red-100 animate-pulse" 
+                  : "text-textSoft hover:text-primary"      
               }`}
             >
               <span className="material-symbols-outlined" data-icon="mic">
